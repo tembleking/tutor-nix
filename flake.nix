@@ -36,12 +36,20 @@
           tutor-webui = callPackage ./plugins/webui.nix {};
           tutor-xqueue = callPackage ./plugins/xqueue.nix {};
         };
+        tutorPackagesList =
+          pkgs.lib.attrsets.attrValues tutorPackages;
+
+        tutor-all = pkgs.symlinkJoin {
+          name = "tutor-all";
+          paths = tutorPackagesList;
+        };
       in {
         packages =
           {
             default = tutorPackages.tutor;
           }
-          // tutorPackages;
+          // tutorPackages
+          // {inherit tutor-all;};
 
         devShells.default = with pkgs;
           mkShell {
@@ -49,10 +57,14 @@
               [
                 # Add here dependencies for the project.
               ]
-              ++ lib.attrsets.attrValues tutorPackages;
+              ++ tutorPackagesList;
           };
 
         formatter = pkgs.alejandra;
+
+        overlays = {
+          addPackages = final: prev: tutorPackages // {inherit tutor-all;};
+        };
       }
     );
 }
